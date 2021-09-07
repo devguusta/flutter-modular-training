@@ -31,14 +31,14 @@ abstract class _LoginStoreBase with Store {
   @action
   void changeLoading(bool value) => isLoading = value;
 
-  Future<bool> login() async {
+  Future<bool> login({required String userName, required String name, required String email}) async {
     bool loginSuccess = false;
    changeLoading(true);
    try{
      final userResponse = await _loginRepository.login(userName: userName, name: name, email: email);
      loginSuccess = true;
    } catch (e){
-     rethrow;
+     e.toString();
    } finally {
      changeLoading(false);
    }

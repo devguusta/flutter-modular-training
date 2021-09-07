@@ -1,6 +1,8 @@
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:modular1/app/modules/login/login_store.dart';
 import 'package:flutter/material.dart';
+import 'package:modular1/app/shared/utils/text_validator.dart';
 
 class LoginPage extends StatefulWidget {
   final String title;
@@ -8,7 +10,8 @@ class LoginPage extends StatefulWidget {
   @override
   LoginPageState createState() => LoginPageState();
 }
-class LoginPageState extends State<LoginPage> {
+
+class LoginPageState extends ModularState<LoginPage, LoginStore> {
   final LoginStore store = Modular.get();
   final _formKey = GlobalKey<FormState>();
   TextEditingController userController = TextEditingController();
@@ -22,56 +25,80 @@ class LoginPageState extends State<LoginPage> {
         title: Text(widget.title),
       ),
       body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: userController,
-                    decoration: InputDecoration(
-                      hintText: "Informe seu userName",
-                    ),
+        child: Observer(
+          builder: (_) {
+            return Column(
+              children: <Widget>[
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextFormField(
+                          validator: (String? value) =>
+                              Validators().validateName(value!),
+                          onChanged: (String value) => store.setUserName(value),
+                          controller: userController,
+                          decoration: InputDecoration(
+                            hintText: "Informe seu userName",
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextFormField(
+                          onChanged: (String value) => store.setName(value),
+                          validator: (String? value) =>
+                              Validators().validateName(value!),
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            hintText: "Informe seu nome",
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextFormField(
+                          validator: (String? value) =>
+                              Validators.validateEmail(value),
+                          onChanged: (String value) {
+                          
+                            store.setEmail(value);
+                          },
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            hintText: "Informe seu email",
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            FocusScopeNode currentFocus =
+                                FocusScope.of(context);
+                            if (_formKey.currentState!.validate()) {
+                              store
+                                  .login(
+                                      name: store.name,
+                                      email: store.email,
+                                      userName: store.userName)
+                                  .then((value) => {
+                                        if (value)
+                                          Modular.to
+                                              .pushReplacementNamed('/home'),
+                                      });
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Erro ao logar!")));
+                            }
+                          },
+                          child: Text("Login"))
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      hintText: "Informe seu nome",
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      hintText: "Informe seu email",
-                    ),
-                  ),
-                ),
-                ElevatedButton(onPressed: (){
-                FocusScopeNode currentFocus = FocusScope.of(context);
-                if(_formKey.currentState!.validate()){
-                  bool isCorrect = true;
-                  if(!currentFocus.hasPrimaryFocus){
-                    currentFocus.unfocus();
-                  }
-                   if(isCorrect){
-                     Modular.to.pushReplacementNamed('/home');
-                   }
-                }
-               
-                }, child: Text("Login"))
-                ],
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
